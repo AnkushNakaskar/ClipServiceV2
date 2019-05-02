@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: clipservice
+    version: v2
+  name: clipservice-v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clipservice
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: clipservice
+        version: v2
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/scheme: "http"
+    spec:
+      containers:
+        - name: clipservice
+          image: "gcr.io/content-eng-qa/clipservicev2:latest"

@@ -1,0 +1,171 @@
+buildscript {
+	ext {
+		springBootVersion = '1.5.9.RELEASE'
+		gradleDockerVersion = '1.2'
+		
+	}
+	repositories {
+	 maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+		classpath('io.spring.gradle:dependency-management-plugin:0.5.4.RELEASE')
+	    classpath "gradle.plugin.com.palantir.gradle.docker:gradle-docker:0.19.2"
+		
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'maven'
+apply plugin: "jacoco"
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'project-report'
+apply plugin: "com.palantir.docker"
+
+
+jar {
+	baseName = project.app
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    maven {
+          url "https://repo.spring.io/milestone"
+    }
+	mavenCentral()
+	mavenLocal()
+}
+
+docker {
+	name "${project.group}"
+	files jar.archivePath
+	println "Ankush"
+	println project.libpath
+	println jar.archiveName
+	buildArgs(['JAR_FILE': "${project.libpath}"])
+}
+
+/*configurations.all {
+    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    exclude group: 'org.springframework.boot', module: 'logback-classic'
+    exclude group: 'org.springframework.boot', module: 'logback-classic'
+}*/
+
+dependencies {
+	
+	compile group: 'org.springframework.boot', name:'spring-boot-starter'
+	compile group: 'org.springframework.boot', name: 'spring-boot-starter-hateoas'
+	//compile group: 'org.springframework.boot', name: 'spring-boot-starter-log4j2'
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator'
+    compile group: 'org.springframework.boot', name: 'spring-boot-actuator-docs'
+	
+	
+	//compile group: 'org.apache.logging.log4j', name: 'log4j-1.2-api', version: '2.7'
+	
+    
+    compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.6.1'
+	
+	compile group: 'org.json', name: 'json', version: '20171018'
+	compile group: 'com.google.code.gson', name: 'gson', version: '2.1'
+    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+
+
+//	compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+//    compile group: 'commons-io', name: 'commons-io', version: '2.4'
+//    compile group: 'commons-validator', name: 'commons-validator', version: '1.4.0'
+//    compile group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'
+
+//	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
+//	compile group: 'org.apache.commons', name: 'commons-collections4', version: '4.0'
+	
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
+    
+   	
+
+	runtime group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.8.5'
+	runtime group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-xml', version: '2.8.5'
+
+	
+	testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test'
+	
+	//google cloud
+	
+  //  compile("org.springframework.integration:spring-integration-core")
+  
+	compile group: 'com.spotify', name: 'async-google-pubsub-client', version: '1.31'
+	compile group: 'com.spotify', name: 'async-datastore-client', version: '3.0.2'
+	compile group: 'com.google.guava', name: 'guava', version: '23.0'
+//	compile group: 'org.springframework.cloud', name: 'spring-cloud-gcp-starter-logging', version: '1.0.0.M2'
+//	compile ('org.springframework.cloud:spring-cloud-gcp-starter-logging:1.0.0.M2'){
+//	exclude group: 'com.google.api', module: 'gax'
+//	}
+	//compile group: 'org.springframework.cloud', name: 'spring-cloud-gcp-autoconfigure', version: '1.0.0.M2'
+	compile group: 'com.google.cloud', name: 'google-cloud-logging-logback', version: '0.49.0-alpha'
+	//testCompile group: 'com.google.truth', name: 'truth', version: '0.41'
+	
+	
+	compile group: 'com.google.api', name: 'gax', version: '1.28.0'
+	//compile group: 'com.google.api', name: 'gax-grpc', version: '1.28.0'
+	
+	
+	
+  
+	
+	
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:Edgware.RELEASE"
+	}
+}
+
+test {
+    jacoco {
+        destinationFile = file("${buildDir}/coverage-reports/jacoco-ut.exec")
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.0'
+}
+
+springBoot  {
+    buildInfo()
+    mainClass = "com.stackdriver.ankush.SpringGoogleApplication"
+    layout = "ZIP"
+}
+
+
+jacocoTestReport {
+	group = "Reporting"
+	reports {
+		xml.enabled true
+		csv.enabled false
+		html.destination "${buildDir}/coverage-reports"
+	}
+}
+
+bootRun {
+	systemProperty 'spring.profiles.active', System.properties['spring.profiles.active']
+	def cp = CollectionUtils.join(File.pathSeparator, classpath.getFiles())
+    environment 'CLASSPATH', cp
+    classpath = classpath.filter { false }
+	if (project.hasProperty("debugPort")){
+		jvmArgs = ['-Xdebug', '-Xrunjdwp:server=y,transport=dt_socket,suspend=n,address=' + debugPort]
+	}
+}
+	
+bootRepackage {	
+	doLast {
+        println "Artifact is built at location : build/libs/" + project.app + ".jar"
+		println "USAGE : nohup java -Xms256m -Xmx512m  -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:" + project.app + "_gc.log -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=20000k -XX:+UseG1GC" + " -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=" + project.app +"_java_pid.hprof -jar " + project.app + ".jar --spring.profiles.active=<dev|qa|automation|prod> &"
+	} 
+}

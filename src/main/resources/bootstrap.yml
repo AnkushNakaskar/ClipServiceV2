@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: spring-google
+
+---
+spring:
+  profiles: ankush
+---
+spring:
+  profiles: test
+---
+
+spring:
+  profiles: default
+---
+spring:
+  profiles: qa
+---
+spring:
+  profiles: automation

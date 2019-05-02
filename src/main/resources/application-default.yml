@@ -1,0 +1,43 @@
+spring:
+  cloud:
+    gcp:
+      project-id: <project-ID>
+  profiles:
+    active: default
+server:
+  port: 8080
+  tomcat:
+    basedir: caas_base
+    accesslog:
+      enabled: false
+      pattern: '%t %a "%r" %s (%D ms)'
+      suffix: '.log'
+      directory: access_logs
+      pubsub:
+        push:
+          enabled: false
+project:
+  env: default
+  gcp:
+    credentials: '{}'
+  log:
+    path: './local-logs'
+    archive:
+      clean:
+        days: 2  
+    app:
+      rollover: '1'
+      size: '10 MB'
+      level: 'DEBUG'
+    lib:
+      rollover: '1'
+      size: '10 MB'
+      level: 'INFO'
+management:
+  security:
+    enabled: false
+  health:
+    jms:
+      enabled: false
+    rabbit:
+      enabled: false

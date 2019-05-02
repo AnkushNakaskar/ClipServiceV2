@@ -1,0 +1,13 @@
+apiVersion: v2
+kind: Service
+metadata:
+  name: clipservice-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: clipservice
+    version: v2
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

@@ -1,0 +1,137 @@
+Configuration:
+
+  name: Default
+  status: info
+  
+  Properties:
+    Property:
+      - name: logging-pattern
+        value: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%5p] [${sys:PID}-(%t)] [%c] : %X{content_id} : %X{content_type} : %X{operation} : %m%n%wEx'
+      - name: log-path
+        value: 'logs'
+      - name: failover-log-path
+        value: 'caasfailover'
+      - name: archive-log-path
+        value: ${log-path}/archive
+      - name: failover-archive-log-path
+        value: ${failover-log-path}/archive
+      - name: app-rollover-days
+        value: '1'   
+      - name: lib-rollover-days
+        value: '1'          
+      - name: app-rollover-size
+        value: '100 MB'                  
+      - name: lib-rollover-size
+        value: '20 MB'
+      - name: lib-level
+        value: 'INFO'
+      - name: app-level
+        value: 'DEBUG'
+      - name: application-name
+        value: 'caas'  
+    
+  Appenders:
+    Console:
+      name: CONSOLE
+      target: SYSTEM_OUT
+      PatternLayout:
+        Pattern: ${logging-pattern}
+    RollingFile:      
+      - name: caas
+        fileName: ${log-path}/${application-name}.log
+        filePattern: ${archive-log-path}/$${date:yyyy-MM}/${application-name}-%d{yyyy-MM-dd}-%i.log.gz
+        PatternLayout:
+          Pattern: ${logging-pattern}
+        policies:
+          TimeBasedTriggeringPolicy:
+            interval: ${app-rollover-days}
+            modulate: true
+          SizeBasedTriggeringPolicy:
+            size: ${app-rollover-size}
+        DefaultRollOverStrategy:
+          max: 999
+      - name: vuclipApi
+        fileName: ${log-path}/vuclip-api.log
+        filePattern: ${archive-log-path}/$${date:yyyy-MM}/${application-name}-%d{yyyy-MM-dd}-%i.log.gz
+        PatternLayout:
+          Pattern: ${logging-pattern}
+        policies:
+          TimeBasedTriggeringPolicy:
+            interval: ${app-rollover-days}
+            modulate: true
+          SizeBasedTriggeringPolicy:
+            size: ${app-rollover-size}
+      - name: LIBS
+        fileName: ${log-path}/${application-name}-libs.log
+        filePattern: ${archive-log-path}/$${date:yyyy-MM}/${application-name}-libs-%d{yyyy-MM-dd}-%i.log.gz
+        PatternLayout:
+          Pattern: ${logging-pattern}
+        policies:
+          TimeBasedTriggeringPolicy:
+            interval: ${lib-rollover-days}
+            modulate: true
+          SizeBasedTriggeringPolicy:
+            size: ${lib-rollover-size}
+      - name: EntityFailOverRollingFile
+        fileName: ${failover-log-path}/${application-name}-pubsub-failover.log
+        filePattern: ${failover-archive-log-path}/$${date:yyyy-MM}/${application-name}-pubsub-failover-%d{yyyy-MM-dd}-%i.log.gz
+        PatternLayout:
+          Pattern: '%m%n'
+        policies:
+          TimeBasedTriggeringPolicy:
+            interval: ${app-rollover-days}
+            modulate: true
+          SizeBasedTriggeringPolicy:
+            size: ${app-rollover-size}
+  Loggers:
+    Root:
+      level: info
+      AppenderRef:
+        - ref: CONSOLE
+    Logger:
+      - name: com.vuclip.content.caas.logger.failover
+        additivity: false
+        level: debug
+        AppenderRef:
+          - ref: EntityFailOverRollingFile
+      - name: com.netflix
+        additivity: false
+        level: error
+        AppenderRef:
+          - ref: LIBS   
+
+      - name: org.springframework
+        additivity: false
+        level: ${lib-level}
+        AppenderRef:
+          - ref: LIBS   
+      - name: org.apache.http
+        additivity: false
+        level: ${lib-level}
+        AppenderRef:
+          - ref: LIBS   
+      - name: com.netflix.loadbalance
+        additivity: false
+        level: ${lib-level}
+        AppenderRef:
+          - ref: LIBS   
+      - name: org.hibernate
+        additivity: false
+        level: ${lib-level}
+        AppenderRef:
+          - ref: LIBS
+      - name: org.thymeleaf
+        additivity: false
+        level: ${lib-level}
+        AppenderRef:
+          - ref: LIBS      
+      - name: com.vuclip.api
+        additivity: false
+        level: ${lib-level}
+        AppenderRef:
+          - ref: vuclipApi
+      - name: springfox
+        additivity: false
+        level: ${lib-level}
+        AppenderRef:
+          - ref: LIBS
